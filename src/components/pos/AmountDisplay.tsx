@@ -1,8 +1,9 @@
 import { useAppState } from '@/hooks/useAppState';
+import { CircleX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function AmountDisplay() {
-  const { state } = useAppState();
+  const { state, dispatch } = useAppState();
   const [ghostNumber, setGhostNumber] = useState<string | null>(null);
   const amount = state.amount;
 
@@ -36,17 +37,27 @@ export function AmountDisplay() {
         </div>
       </div>
 
-      {/* Amount */}
-      <div className="relative flex items-center justify-center">
-        <span className="pos-amount text-[56px] sm:text-[64px] font-bold text-[var(--pos-text-primary)] leading-none tracking-tight">
-          ¥{formattedAmount}
-        </span>
-
-        {/* Ghost floating number */}
-        {ghostNumber && (
-          <span className="absolute -top-6 right-0 text-lg font-semibold text-[var(--pos-accent-primary)] float-up">
-            {ghostNumber}
+      {/* Amount + clear (input-style trailing button) */}
+      <div className="flex items-center justify-center gap-2">
+        <div className="relative">
+          <span className="pos-amount text-[56px] sm:text-[64px] font-bold text-[var(--pos-text-primary)] leading-none tracking-tight">
+            ¥{formattedAmount}
           </span>
+          {ghostNumber && (
+            <span className="absolute -top-6 right-0 text-lg font-semibold text-[var(--pos-accent-primary)] float-up">
+              {ghostNumber}
+            </span>
+          )}
+        </div>
+        {amount !== '0' && (
+          <button
+            type="button"
+            aria-label="清空金额"
+            onClick={() => dispatch({ type: 'CLEAR_AMOUNT' })}
+            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[var(--pos-text-secondary)] bg-[var(--pos-bg-surface)] shadow-sm active:scale-95 active:bg-gray-100 transition-all select-none"
+          >
+            <CircleX size={20} strokeWidth={2} />
+          </button>
         )}
       </div>
 
