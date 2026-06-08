@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { BottomNav } from '@/components/pos/BottomNav';
@@ -11,10 +12,26 @@ import { PaymentResultScreen } from '@/pages/pos/PaymentResultScreen';
 import { LoginScreen } from '@/pages/LoginScreen';
 import './App.css';
 
+function getAllowedScreens(role: string) {
+  return role === 'system_admin'
+    ? ['profile', 'payment_loading', 'payment_result']
+    : ['home', 'orders', 'profile', 'payment_loading', 'payment_result'];
+}
+
 function AppContent() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const user = useAuthStore((s) => s.user);
   const currentScreen = useUiStore((s) => s.currentScreen);
+  const setTab = useUiStore((s) => s.setTab);
+
+  // 刷新后 auth 已持久化恢复，但 uiStore 的 currentScreen 仍为默认 'login'，需同步
+  useEffect(() => {
+    if (!isLoggedIn || !user) return;
+    const allowed = getAllowedScreens(user.role);
+    if (!allowed.includes(currentScreen)) {
+      setTab(user.role === 'system_admin' ? 'profile' : 'home');
+    }
+  }, [isLoggedIn, user, currentScreen, setTab]);
 
   // 未登录 → 登录页
   if (!isLoggedIn || !user) {
@@ -27,12 +44,7 @@ function AppContent() {
     );
   }
 
-  // 角色权限控制：系统管理员不允许进入交易页面
-  const isSystemAdmin = user.role === 'system_admin';
-  const allowedScreens = isSystemAdmin
-    ? ['profile', 'payment_loading', 'payment_result']
-    : ['home', 'orders', 'profile', 'payment_loading', 'payment_result'];
-
+  const allowedScreens = getAllowedScreens(user.role);
   const effectiveScreen = allowedScreens.includes(currentScreen) ? currentScreen : 'profile';
 
   const renderScreen = () => {

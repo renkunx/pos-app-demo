@@ -15,7 +15,7 @@ export function BottomNav() {
   const activeTab = useUiStore((s) => s.activeTab);
   const setTab = useUiStore((s) => s.setTab);
 
-  const isFullScreen = currentScreen === 'payment_loading' || currentScreen === 'payment_result' || currentScreen === 'login';
+  const isFullScreen = currentScreen === 'payment_loading' || currentScreen === 'payment_result';
 
   if (isFullScreen) return null;
 
