@@ -3,6 +3,8 @@ import { useEffect, useCallback, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { usePosStore } from '@/stores/posStore';
 import { useUiStore } from '@/stores/uiStore';
+import { formatDateISO } from '@/lib/orderFilter';
+import type { DateFilterPreset } from '@/types';
 
 export function ActionSheet() {
   const isOpen = useUiStore((s) => s.isActionSheetOpen);
@@ -240,7 +242,35 @@ function ReprintOptionsSheet({ onClose }: { onClose: () => void }) {
 }
 
 function DateFilterSheet({ onClose }: { onClose: () => void }) {
-  const options = ['今天', '昨天', '近7天', '近30天', '自定义'];
+  const orderDateFilter = useUiStore((s) => s.orderDateFilter);
+  const setOrderDateFilter = useUiStore((s) => s.setOrderDateFilter);
+  const clearOrderDateFilter = useUiStore((s) => s.clearOrderDateFilter);
+
+  const today = formatDateISO(new Date());
+  const [preset, setPreset] = useState<DateFilterPreset>(orderDateFilter?.preset ?? 'today');
+  const [customStart, setCustomStart] = useState(orderDateFilter?.customStartDate ?? today);
+  const [customEnd, setCustomEnd] = useState(orderDateFilter?.customEndDate ?? today);
+
+  const presets: { key: DateFilterPreset; label: string }[] = [
+    { key: 'today', label: '今天' },
+    { key: 'yesterday', label: '昨天' },
+    { key: 'last7days', label: '近7天' },
+    { key: 'last30days', label: '近30天' },
+    { key: 'custom', label: '自定义' },
+  ];
+
+  const handleApply = () => {
+    if (preset === 'custom') {
+      setOrderDateFilter({
+        preset: 'custom',
+        customStartDate: customStart,
+        customEndDate: customEnd,
+      });
+    } else {
+      setOrderDateFilter({ preset });
+    }
+    onClose();
+  };
 
   return (
     <div className="px-4">
@@ -248,16 +278,65 @@ function DateFilterSheet({ onClose }: { onClose: () => void }) {
         <Calendar size={18} />
         选择时间范围
       </h3>
-      <div className="space-y-1">
-        {options.map((opt) => (
+      <div className="space-y-1 mb-4">
+        {presets.map((opt) => (
           <button
-            key={opt}
-            onClick={() => onClose()}
-            className="w-full text-left px-4 py-3 rounded-xl text-sm text-[var(--pos-text-primary)] hover:bg-[var(--pos-bg-primary)] active:bg-[var(--pos-accent-primary-light)] active:text-[var(--pos-accent-primary)] transition-colors"
+            key={opt.key}
+            onClick={() => setPreset(opt.key)}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+              preset === opt.key
+                ? 'bg-[var(--pos-accent-primary-light)] text-[var(--pos-accent-primary)] font-medium'
+                : 'text-[var(--pos-text-primary)] hover:bg-[var(--pos-bg-primary)]'
+            }`}
           >
-            {opt}
+            {opt.label}
           </button>
         ))}
+      </div>
+
+      {preset === 'custom' && (
+        <div className="bg-[var(--pos-bg-primary)] rounded-xl p-4 mb-4 space-y-3">
+          <div>
+            <label className="text-xs text-[var(--pos-text-secondary)] mb-1.5 block">开始日期</label>
+            <input
+              type="date"
+              value={customStart}
+              max={customEnd}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="w-full h-10 px-3 bg-white rounded-lg text-sm text-[var(--pos-text-primary)] outline-none focus:ring-2 focus:ring-[var(--pos-accent-primary)]/20"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-[var(--pos-text-secondary)] mb-1.5 block">结束日期</label>
+            <input
+              type="date"
+              value={customEnd}
+              min={customStart}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="w-full h-10 px-3 bg-white rounded-lg text-sm text-[var(--pos-text-primary)] outline-none focus:ring-2 focus:ring-[var(--pos-accent-primary)]/20"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        {orderDateFilter && (
+          <button
+            onClick={() => {
+              clearOrderDateFilter();
+              onClose();
+            }}
+            className="flex-1 h-11 bg-[var(--pos-bg-primary)] text-[var(--pos-text-secondary)] rounded-xl text-sm font-medium active:scale-[0.97] transition-transform"
+          >
+            清除
+          </button>
+        )}
+        <button
+          onClick={handleApply}
+          className="flex-1 h-11 bg-[var(--pos-accent-primary)] text-white rounded-xl text-sm font-medium active:scale-[0.97] transition-transform"
+        >
+          确认
+        </button>
       </div>
     </div>
   );

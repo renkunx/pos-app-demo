@@ -10,6 +10,14 @@ export type DeviceStatus = 'online' | 'offline' | 'warning';
 
 export type UserRole = 'system_admin' | 'admin' | 'operator';
 
+export type DateFilterPreset = 'today' | 'yesterday' | 'last7days' | 'last30days' | 'custom';
+
+export interface OrderDateFilter {
+  preset: DateFilterPreset;
+  customStartDate?: string;
+  customEndDate?: string;
+}
+
 export interface User {
   username: string;
   role: UserRole;

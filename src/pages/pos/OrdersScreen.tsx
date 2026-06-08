@@ -4,6 +4,7 @@ import { Header } from '@/components/pos/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { usePosStore } from '@/stores/posStore';
 import { useUiStore } from '@/stores/uiStore';
+import { getDateFilterLabel, isTransactionInDateFilter } from '@/lib/orderFilter';
 import type { Transaction } from '@/types';
 
 export function OrdersScreen() {
@@ -11,13 +12,14 @@ export function OrdersScreen() {
   const transactions = usePosStore((s) => s.transactions);
   const openActionSheet = useUiStore((s) => s.openActionSheet);
   const selectOrder = useUiStore((s) => s.selectOrder);
+  const orderDateFilter = useUiStore((s) => s.orderDateFilter);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeDateFilter, setActiveDateFilter] = useState('今天');
 
-  const dateFilters = ['今天', '昨天', '近7天', '近30天'];
+  const hasActiveFilter = orderDateFilter !== null;
+  const filterLabel = getDateFilterLabel(orderDateFilter);
 
-  // Filter transactions
   const filtered = transactions.filter((tx) => {
+    if (!isTransactionInDateFilter(tx, orderDateFilter)) return false;
     if (searchQuery) {
       return tx.orderNo.includes(searchQuery) || tx.referenceNo?.includes(searchQuery);
     }
@@ -80,28 +82,24 @@ export function OrdersScreen() {
         </div>
         <button
           onClick={() => openActionSheet('date_filter')}
-          className="h-10 px-3 bg-white rounded-xl flex items-center gap-1.5 shadow-sm active:scale-[0.97] transition-transform"
+          className={`h-10 px-3 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-[0.97] transition-all ${
+            hasActiveFilter
+              ? 'bg-[var(--pos-accent-primary-light)] ring-2 ring-[var(--pos-accent-primary)]'
+              : 'bg-white'
+          }`}
         >
-          <Filter size={16} className="text-[var(--pos-text-secondary)]" />
-          <span className="text-sm text-[var(--pos-text-secondary)]">筛选</span>
-        </button>
-      </div>
-
-      {/* Date filter tabs */}
-      <div className="shrink-0 flex gap-1.5 px-4 pb-2 overflow-x-auto no-scrollbar">
-        {dateFilters.map((d) => (
-          <button
-            key={d}
-            onClick={() => setActiveDateFilter(d)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-              activeDateFilter === d
-                ? 'bg-[var(--pos-accent-primary)] text-white'
-                : 'bg-white text-[var(--pos-text-secondary)]'
+          <Filter
+            size={16}
+            className={hasActiveFilter ? 'text-[var(--pos-accent-primary)]' : 'text-[var(--pos-text-secondary)]'}
+          />
+          <span
+            className={`text-sm max-w-[4.5rem] truncate ${
+              hasActiveFilter ? 'text-[var(--pos-accent-primary)] font-medium' : 'text-[var(--pos-text-secondary)]'
             }`}
           >
-            {d}
-          </button>
-        ))}
+            {hasActiveFilter ? filterLabel : '筛选'}
+          </span>
+        </button>
       </div>
 
       {/* Stats card */}

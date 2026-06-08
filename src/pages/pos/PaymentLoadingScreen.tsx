@@ -13,7 +13,8 @@ export function PaymentLoadingScreen() {
       const isSuccess = Math.random() > 0.1;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const orderNo = `20240603${String(Math.floor(Math.random() * 9000) + 1000)}`;
+      const datePrefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const orderNo = `${datePrefix}${String(Math.floor(Math.random() * 9000) + 1000)}`;
 
       const transaction = {
         id: String(Date.now()),

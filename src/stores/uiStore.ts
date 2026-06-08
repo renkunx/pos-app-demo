@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ScreenName } from '@/types';
+import type { OrderDateFilter, ScreenName } from '@/types';
 
 interface UiState {
   currentScreen: ScreenName;
@@ -7,6 +7,7 @@ interface UiState {
   isActionSheetOpen: boolean;
   actionSheetType: string | null;
   selectedOrderId: string | null;
+  orderDateFilter: OrderDateFilter | null;
   toast: { message: string; visible: boolean } | null;
 
   navigate: (screen: ScreenName) => void;
@@ -14,6 +15,8 @@ interface UiState {
   openActionSheet: (sheetType: string) => void;
   closeActionSheet: () => void;
   selectOrder: (orderId: string) => void;
+  setOrderDateFilter: (filter: OrderDateFilter) => void;
+  clearOrderDateFilter: () => void;
   showToast: (message: string) => void;
   hideToast: () => void;
 }
@@ -26,6 +29,7 @@ export const useUiStore = create<UiState>()((set) => ({
   isActionSheetOpen: false,
   actionSheetType: null,
   selectedOrderId: null,
+  orderDateFilter: null,
   toast: null,
 
   navigate: (screen) => set({ currentScreen: screen }),
@@ -42,6 +46,10 @@ export const useUiStore = create<UiState>()((set) => ({
     set({ isActionSheetOpen: false, actionSheetType: null }),
 
   selectOrder: (orderId) => set({ selectedOrderId: orderId }),
+
+  setOrderDateFilter: (filter) => set({ orderDateFilter: filter }),
+
+  clearOrderDateFilter: () => set({ orderDateFilter: null }),
 
   showToast: (message) => {
     if (toastTimer) clearTimeout(toastTimer);
