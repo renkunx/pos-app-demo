@@ -1,11 +1,12 @@
-import { useAppState } from '@/hooks/useAppState';
+import { usePosStore } from '@/stores/posStore';
 import { CircleX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function AmountDisplay() {
-  const { state, dispatch } = useAppState();
+  const amount = usePosStore((s) => s.amount);
+  const transactions = usePosStore((s) => s.transactions);
+  const clearAmount = usePosStore((s) => s.clearAmount);
   const [ghostNumber, setGhostNumber] = useState<string | null>(null);
-  const amount = state.amount;
 
   // Trigger ghost number animation when amount changes
   useEffect(() => {
@@ -22,15 +23,14 @@ export function AmountDisplay() {
     <div className="flex-1 flex flex-col items-center justify-center relative px-4 min-h-0">
       {/* Operator info */}
       <div className="absolute top-3 left-4 text-xs text-[var(--pos-text-secondary)]">
-        操作员：{state.terminal.operator}
+        <div>今日 {transactions.filter((t) => t.type === 'payment' && t.status === 'success').length} 笔</div>
       </div>
 
       {/* Today's summary */}
       <div className="absolute top-3 right-4 text-xs text-[var(--pos-text-secondary)] text-right">
-        <div>今日 {state.transactions.filter((t) => t.type === 'payment' && t.status === 'success').length} 笔</div>
         <div>
           ¥
-          {state.transactions
+          {transactions
             .filter((t) => t.type === 'payment' && t.status === 'success')
             .reduce((sum, t) => sum + t.amount, 0)
             .toFixed(2)}
@@ -53,7 +53,7 @@ export function AmountDisplay() {
           <button
             type="button"
             aria-label="清空金额"
-            onClick={() => dispatch({ type: 'CLEAR_AMOUNT' })}
+            onClick={clearAmount}
             className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[var(--pos-text-secondary)] bg-[var(--pos-bg-surface)] shadow-sm active:scale-95 active:bg-gray-100 transition-all select-none"
           >
             <CircleX size={20} strokeWidth={2} />

@@ -1,5 +1,6 @@
 import { Delete, CreditCard, QrCode, Pencil } from 'lucide-react';
-import { useAppState } from '@/hooks/useAppState';
+import { usePosStore } from '@/stores/posStore';
+import { useUiStore } from '@/stores/uiStore';
 import { useState, useCallback } from 'react';
 
 type KeyDef = {
@@ -53,35 +54,45 @@ const payColorClasses = {
 } as const;
 
 export function CustomKeypad() {
-  const { state, dispatch } = useAppState();
+  const amount = usePosStore((s) => s.amount);
+  const quickAmounts = usePosStore((s) => s.quickAmounts);
+  const appendDigit = usePosStore((s) => s.appendDigit);
+  const backspace = usePosStore((s) => s.backspace);
+  const setAmount = usePosStore((s) => s.setAmount);
+  const setPaymentMethod = usePosStore((s) => s.setPaymentMethod);
+  const startPayment = usePosStore((s) => s.startPayment);
+  const openActionSheet = useUiStore((s) => s.openActionSheet);
+  const navigate = useUiStore((s) => s.navigate);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
 
-  const canPay = parseFloat(state.amount) > 0;
+  const canPay = parseFloat(amount) > 0;
 
   const handleKeyPress = useCallback((key: KeyDef) => {
     switch (key.value) {
       case 'backspace':
-        dispatch({ type: 'BACKSPACE' });
+        backspace();
         break;
       case 'pay_card':
         if (!canPay) return;
-        dispatch({ type: 'SET_PAYMENT_METHOD', method: 'card' });
-        dispatch({ type: 'START_PAYMENT' });
+        setPaymentMethod('card');
+        startPayment();
+        navigate('payment_loading');
         break;
       case 'pay_scan':
         if (!canPay) return;
-        dispatch({ type: 'SET_PAYMENT_METHOD', method: 'scan' });
-        dispatch({ type: 'START_PAYMENT' });
+        setPaymentMethod('scan');
+        startPayment();
+        navigate('payment_loading');
         break;
       default:
-        dispatch({ type: 'APPEND_DIGIT', digit: key.value });
+        appendDigit(key.value);
     }
-  }, [dispatch, canPay]);
+  }, [canPay, backspace, setPaymentMethod, startPayment, navigate, appendDigit]);
 
   const handleQuickAmount = (val: number) => {
-    const current = parseFloat(state.amount);
+    const current = parseFloat(amount);
     const newVal = current === 0 ? val : current + val;
-    dispatch({ type: 'SET_AMOUNT', amount: String(newVal) });
+    setAmount(String(newVal));
   };
 
   const renderKeyButton = (key: KeyDef, extraClass = '') => {
@@ -133,7 +144,7 @@ export function CustomKeypad() {
   return (
     <div className="shrink-0 bg-[#F0F1F5] p-3 pb-5">
       <div className="flex gap-2 mb-3">
-        {state.quickAmounts.map((val) => (
+        {quickAmounts.map((val) => (
           <button
             key={val}
             onClick={() => handleQuickAmount(val)}
@@ -143,7 +154,7 @@ export function CustomKeypad() {
           </button>
         ))}
         <button
-          onClick={() => dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'quick_amount_settings' })}
+          onClick={() => openActionSheet('quick_amount_settings')}
           className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm active:scale-[0.96] transition-transform text-[var(--pos-text-secondary)]"
         >
           <Pencil size={15} />

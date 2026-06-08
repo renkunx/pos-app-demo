@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { Search, Filter, ChevronRight, CreditCard, QrCode, Zap, ArrowDownLeft, ArrowUpRight, RotateCcw, Printer } from 'lucide-react';
 import { Header } from '@/components/pos/Header';
-import { useAppState } from '@/hooks/useAppState';
+import { useAuthStore } from '@/stores/authStore';
+import { usePosStore } from '@/stores/posStore';
+import { useUiStore } from '@/stores/uiStore';
 import type { Transaction } from '@/types';
 
 export function OrdersScreen() {
-  const { state, dispatch } = useAppState();
+  const user = useAuthStore((s) => s.user);
+  const transactions = usePosStore((s) => s.transactions);
+  const openActionSheet = useUiStore((s) => s.openActionSheet);
+  const selectOrder = useUiStore((s) => s.selectOrder);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDateFilter, setActiveDateFilter] = useState('今天');
 
   const dateFilters = ['今天', '昨天', '近7天', '近30天'];
 
   // Filter transactions
-  const filtered = state.transactions.filter((tx) => {
+  const filtered = transactions.filter((tx) => {
     if (searchQuery) {
       return tx.orderNo.includes(searchQuery) || tx.referenceNo?.includes(searchQuery);
     }
@@ -26,8 +31,17 @@ export function OrdersScreen() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const handleOrderClick = (tx: Transaction) => {
-    dispatch({ type: 'SELECT_ORDER', orderId: tx.id });
-    dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'order_options' });
+    selectOrder(tx.id);
+    openActionSheet('order_options');
+  };
+
+  // 操作员退款需要校验退货密码
+  const handleRefundClick = () => {
+    if (user?.role === 'operator') {
+      openActionSheet('verify_refund_password');
+    } else {
+      openActionSheet('refund_input');
+    }
   };
 
   return (
@@ -37,14 +51,14 @@ export function OrdersScreen() {
       {/* 退款/补打操作卡片 */}
       <div className="shrink-0 flex gap-2 px-4 pt-3 pb-2">
         <button
-          onClick={() => dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'refund_input' })}
+          onClick={handleRefundClick}
           className="flex-1 h-11 bg-white rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm font-medium text-[var(--pos-text-primary)] active:scale-[0.97] transition-transform"
         >
           <RotateCcw size={16} className="text-[var(--pos-accent-error)]" />
           退款
         </button>
         <button
-          onClick={() => dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'reprint_options' })}
+          onClick={() => openActionSheet('reprint_options')}
           className="flex-1 h-11 bg-white rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm font-medium text-[var(--pos-text-primary)] active:scale-[0.97] transition-transform"
         >
           <Printer size={16} className="text-[var(--pos-text-secondary)]" />
@@ -65,7 +79,7 @@ export function OrdersScreen() {
           />
         </div>
         <button
-          onClick={() => dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'date_filter' })}
+          onClick={() => openActionSheet('date_filter')}
           className="h-10 px-3 bg-white rounded-xl flex items-center gap-1.5 shadow-sm active:scale-[0.97] transition-transform"
         >
           <Filter size={16} className="text-[var(--pos-text-secondary)]" />

@@ -15,17 +15,51 @@ import {
   Smartphone,
   KeyRound,
   LogIn,
+  FileText,
+  UserPlus,
+  Lock,
+  LogOut,
 } from 'lucide-react';
-import { useAppState } from '@/hooks/useAppState';
-import type { DeviceStatus } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import { usePosStore } from '@/stores/posStore';
+import { useUiStore } from '@/stores/uiStore';
+import type { DeviceStatus, UserRole } from '@/types';
+
+interface ManageAction {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  roles: UserRole[];
+  actionType?: string; // actionSheet type override, defaults to 'manage_confirm'
+}
+
+const allManageActions: ManageAction[] = [
+  { key: 'log_report',   label: '日志上报',   icon: <FileText size={18} />,   roles: ['system_admin'] },
+  { key: 'param_download', label: '参数下载',  icon: <Download size={18} />,   roles: ['system_admin', 'admin'] },
+  { key: 're_checkin',   label: '重新签到',   icon: <RefreshCw size={18} />,  roles: ['system_admin', 'admin'] },
+  { key: 'merchant_setting', label: '商户设置', icon: <Settings size={18} />,  roles: ['system_admin', 'admin'] },
+  { key: 'add_user',     label: '新增用户',   icon: <UserPlus size={18} />,   roles: ['admin'] },
+  { key: 'refund_password', label: '退货密码',  icon: <Lock size={18} />,      roles: ['admin'], actionType: 'set_refund_password' },
+];
 
 export function ProfileScreen() {
-  const { state, dispatch } = useAppState();
-  const { terminal } = state;
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const terminal = usePosStore((s) => s.terminal);
+  const openActionSheet = useUiStore((s) => s.openActionSheet);
 
-  const handleManageAction = (_action: string) => {
-    dispatch({ type: 'OPEN_ACTION_SHEET', sheetType: 'manage_confirm' });
+  const handleManageAction = (action: ManageAction) => {
+    const sheetType = action.actionType || 'manage_confirm';
+    openActionSheet(sheetType);
   };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const visibleActions = allManageActions.filter(
+    (a) => user && a.roles.includes(user.role)
+  );
 
   return (
     <div className="flex flex-col h-full bg-[var(--pos-bg-primary)]">
@@ -36,9 +70,15 @@ export function ProfileScreen() {
             <div className="w-11 h-11 rounded-full bg-[var(--pos-accent-primary-light)] flex items-center justify-center">
               <Smartphone size={20} className="text-[var(--pos-accent-primary)]" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-base font-semibold text-[var(--pos-text-primary)]">{terminal.merchantName}</h3>
-              <p className="text-xs text-[var(--pos-text-secondary)]">{terminal.operator}</p>
+              <p className="text-xs text-[var(--pos-text-secondary)]">
+                {user && (
+                  <span className="inline-block px-1.5 py-0.5 rounded-full bg-[var(--pos-accent-primary-light)] text-[var(--pos-accent-primary)] text-[10px]">
+                    {user.displayName} · {user.role === 'system_admin' ? '系统管理员' : user.role === 'admin' ? '管理员' : '操作员'}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 
@@ -47,26 +87,21 @@ export function ProfileScreen() {
             <InfoRow label="终端号" value={terminal.terminalNo} />
           </div>
 
-          {/* 分隔线 */}
-          <div className="border-t border-black/5 -mx-4 mb-1" />
-
-          {/* 管理操作区 */}
-          <ManageRow
-            icon={<Download size={18} />}
-            label="参数下载"
-            onClick={() => handleManageAction('param_download')}
-          />
-          <ManageRow
-            icon={<RefreshCw size={18} />}
-            label="重新签到"
-            onClick={() => handleManageAction('re_checkin')}
-          />
-          <ManageRow
-            icon={<Settings size={18} />}
-            label="商户设置"
-            onClick={() => handleManageAction('merchant_setting')}
-            isLast
-          />
+          {/* 管理操作区（仅当有可见操作时显示分隔线和列表） */}
+          {visibleActions.length > 0 && (
+            <>
+              <div className="border-t border-black/5 -mx-4 mb-1" />
+              {visibleActions.map((action, index) => (
+                <ManageRow
+                  key={action.key}
+                  icon={action.icon}
+                  label={action.label}
+                  onClick={() => handleManageAction(action)}
+                  isLast={index === visibleActions.length - 1}
+                />
+              ))}
+            </>
+          )}
         </div>
 
         {/* Transaction readiness */}
@@ -136,8 +171,19 @@ export function ProfileScreen() {
           />
         </div>
 
+        {/* Logout */}
+        <div className="mx-4 mt-4">
+          <button
+            onClick={handleLogout}
+            className="w-full h-11 bg-white rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm text-[var(--pos-accent-error)] active:scale-[0.97] transition-transform"
+          >
+            <LogOut size={16} />
+            退出登录
+          </button>
+        </div>
+
         {/* Version info */}
-        <div className="mx-4 mt-4 mb-2 flex items-center justify-center gap-4 text-xs text-[var(--pos-text-secondary)]">
+        <div className="mx-4 mt-3 mb-2 flex items-center justify-center gap-4 text-xs text-[var(--pos-text-secondary)]">
           <span>App v{terminal.appVersion}</span>
           <span>配置 {terminal.configVersion}</span>
         </div>

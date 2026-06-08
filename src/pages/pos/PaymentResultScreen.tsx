@@ -1,37 +1,45 @@
 import { useEffect, useRef } from 'react';
 import { XCircle, Printer, Home, RotateCcw, FileSearch } from 'lucide-react';
-import { useAppState } from '@/hooks/useAppState';
+import { usePosStore } from '@/stores/posStore';
+import { useUiStore } from '@/stores/uiStore';
 
 export function PaymentResultScreen() {
-  const { state, dispatch } = useAppState();
+  const amount = usePosStore((s) => s.amount);
+  const lastTransaction = usePosStore((s) => s.lastTransaction);
+  const paymentStatus = usePosStore((s) => s.paymentStatus);
+  const resetHome = usePosStore((s) => s.resetHome);
+  const navigate = useUiStore((s) => s.navigate);
+  const setTab = useUiStore((s) => s.setTab);
+  const showToast = useUiStore((s) => s.showToast);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const tx = state.lastTransaction;
-  const isSuccess = state.paymentStatus === 'success';
+  const tx = lastTransaction;
+  const isSuccess = paymentStatus === 'success';
 
   // Auto-return after 5 seconds on success
   useEffect(() => {
     if (isSuccess) {
       timerRef.current = setTimeout(() => {
-        dispatch({ type: 'RESET_HOME' });
+        resetHome();
+        navigate('home');
       }, 5000);
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isSuccess, dispatch]);
+  }, [isSuccess, resetHome, navigate]);
 
   const handlePrint = () => {
-    dispatch({ type: 'SHOW_TOAST', message: '小票打印成功' });
+    showToast('小票打印成功');
   };
 
   const handleReturnHome = () => {
-    dispatch({ type: 'RESET_HOME' });
+    resetHome();
+    navigate('home');
   };
 
   const handleRetry = () => {
-    dispatch({ type: 'NAVIGATE', screen: 'home' });
-    dispatch({ type: 'SET_TAB', tab: 'home' });
+    navigate('home');
   };
 
   return (
@@ -72,7 +80,7 @@ export function PaymentResultScreen() {
 
         {/* Amount */}
         <div className="text-4xl font-bold text-[var(--pos-text-primary)] pos-amount mb-6">
-          ¥{tx ? tx.amount.toFixed(2) : parseFloat(state.amount).toFixed(2)}
+          ¥{tx ? tx.amount.toFixed(2) : parseFloat(amount).toFixed(2)}
         </div>
 
         {/* Detail card */}
@@ -137,7 +145,7 @@ export function PaymentResultScreen() {
             </button>
             <div className="flex gap-2.5">
               <button
-                onClick={() => dispatch({ type: 'SET_TAB', tab: 'orders' })}
+                onClick={() => setTab('orders')}
                 className="flex-1 h-12 bg-[var(--pos-bg-primary)] text-[var(--pos-text-primary)] rounded-xl text-base font-medium flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
               >
                 <FileSearch size={18} />

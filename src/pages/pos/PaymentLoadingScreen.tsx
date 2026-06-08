@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
-import { useAppState } from '@/hooks/useAppState';
+import { usePosStore } from '@/stores/posStore';
+import { useUiStore } from '@/stores/uiStore';
 
 export function PaymentLoadingScreen() {
-  const { state, dispatch } = useAppState();
+  const amount = usePosStore((s) => s.amount);
+  const selectedPaymentMethod = usePosStore((s) => s.selectedPaymentMethod);
+  const setPaymentStatus = usePosStore((s) => s.setPaymentStatus);
+  const navigate = useUiStore((s) => s.navigate);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Simulate payment result
-      const isSuccess = Math.random() > 0.1; // 90% success rate
-      const amount = parseFloat(state.amount);
+      const isSuccess = Math.random() > 0.1;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const orderNo = `20240603${String(Math.floor(Math.random() * 9000) + 1000)}`;
@@ -17,20 +19,20 @@ export function PaymentLoadingScreen() {
         id: String(Date.now()),
         orderNo,
         type: 'payment' as const,
-        amount,
-        paymentMethod: state.selectedPaymentMethod,
+        amount: parseFloat(amount),
+        paymentMethod: selectedPaymentMethod,
         status: (isSuccess ? 'success' : 'fail') as 'success' | 'fail',
         time: timeStr,
         referenceNo: `REF${String(Math.floor(Math.random() * 900) + 100)}`,
         voucherNo: `VC${String(Math.floor(Math.random() * 900) + 100)}`,
       };
 
-      dispatch({ type: 'SET_PAYMENT_STATUS', status: isSuccess ? 'success' : 'fail', transaction });
-      dispatch({ type: 'NAVIGATE', screen: 'payment_result' });
+      setPaymentStatus(isSuccess ? 'success' : 'fail', transaction);
+      navigate('payment_result');
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [dispatch, state.amount, state.selectedPaymentMethod]);
+  }, [amount, selectedPaymentMethod, setPaymentStatus, navigate]);
 
   return (
     <div className="flex flex-col h-full bg-white items-center justify-center">
@@ -43,10 +45,10 @@ export function PaymentLoadingScreen() {
         请稍候，正在处理您的交易...
       </p>
       <div className="mt-8 text-3xl font-bold text-[var(--pos-text-primary)] pos-amount">
-        ¥{parseFloat(state.amount).toFixed(2)}
+        ¥{parseFloat(amount).toFixed(2)}
       </div>
       <p className="mt-2 text-xs text-[var(--pos-text-secondary)]">
-        {state.selectedPaymentMethod === 'card' ? '刷卡支付' : state.selectedPaymentMethod === 'scan' ? '扫码支付' : '自动识别'}
+        {selectedPaymentMethod === 'card' ? '刷卡支付' : selectedPaymentMethod === 'scan' ? '扫码支付' : '自动识别'}
       </p>
     </div>
   );

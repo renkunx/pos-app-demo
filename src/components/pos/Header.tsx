@@ -1,12 +1,13 @@
-import { useAppState } from '@/hooks/useAppState';
+import { useAuthStore } from '@/stores/authStore';
+import { usePosStore } from '@/stores/posStore';
 
 interface HeaderProps {
   showStatus?: boolean;
 }
 
 export function Header({ showStatus = true }: HeaderProps) {
-  const { state } = useAppState();
-  const { terminal } = state;
+  const terminal = usePosStore((s) => s.terminal);
+  const user = useAuthStore((s) => s.user);
 
   return (
     <header className="shrink-0 h-12 bg-white border-b border-black/5 flex items-center justify-between px-4 z-50 relative">
@@ -14,6 +15,11 @@ export function Header({ showStatus = true }: HeaderProps) {
         <span className="text-sm font-semibold text-[var(--pos-text-primary)]">
           {terminal.merchantName}
         </span>
+        {user && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--pos-accent-primary-light)] text-[var(--pos-accent-primary)]">
+            {user.displayName}
+          </span>
+        )}
       </div>
 
       {showStatus && (

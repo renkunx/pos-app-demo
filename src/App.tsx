@@ -1,4 +1,5 @@
-import { AppProvider, useAppState } from '@/hooks/useAppState';
+import { useAuthStore } from '@/stores/authStore';
+import { useUiStore } from '@/stores/uiStore';
 import { BottomNav } from '@/components/pos/BottomNav';
 import { ActionSheet } from '@/components/pos/ActionSheet';
 import { Toast } from '@/components/pos/Toast';
@@ -7,13 +8,35 @@ import { OrdersScreen } from '@/pages/pos/OrdersScreen';
 import { ProfileScreen } from '@/pages/pos/ProfileScreen';
 import { PaymentLoadingScreen } from '@/pages/pos/PaymentLoadingScreen';
 import { PaymentResultScreen } from '@/pages/pos/PaymentResultScreen';
+import { LoginScreen } from '@/pages/LoginScreen';
 import './App.css';
 
 function AppContent() {
-  const { state } = useAppState();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const user = useAuthStore((s) => s.user);
+  const currentScreen = useUiStore((s) => s.currentScreen);
+
+  // 未登录 → 登录页
+  if (!isLoggedIn || !user) {
+    return (
+      <div className="h-screen w-full bg-neutral-900 flex justify-center items-center p-0 md:p-4">
+        <div className="w-full max-w-[430px] h-[100dvh] md:h-[850px] bg-[var(--pos-bg-primary)] rounded-none overflow-hidden shadow-2xl relative isolate flex flex-col">
+          <LoginScreen />
+        </div>
+      </div>
+    );
+  }
+
+  // 角色权限控制：系统管理员不允许进入交易页面
+  const isSystemAdmin = user.role === 'system_admin';
+  const allowedScreens = isSystemAdmin
+    ? ['profile', 'payment_loading', 'payment_result']
+    : ['home', 'orders', 'profile', 'payment_loading', 'payment_result'];
+
+  const effectiveScreen = allowedScreens.includes(currentScreen) ? currentScreen : 'profile';
 
   const renderScreen = () => {
-    switch (state.currentScreen) {
+    switch (effectiveScreen) {
       case 'home':
         return <HomeScreen />;
       case 'orders':
@@ -29,8 +52,8 @@ function AppContent() {
     }
   };
 
-  // Full-screen pages (payment flow) don't use the standard layout
-  const isFullScreen = state.currentScreen === 'payment_loading' || state.currentScreen === 'payment_result';
+  // 全屏页面
+  const isFullScreen = effectiveScreen === 'payment_loading' || effectiveScreen === 'payment_result' || effectiveScreen === 'login';
 
   return (
     <div className="h-screen w-full bg-neutral-900 flex justify-center items-center p-0 md:p-4">
@@ -57,9 +80,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
-  );
+  return <AppContent />;
 }
