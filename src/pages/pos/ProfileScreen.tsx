@@ -24,6 +24,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { usePosStore } from '@/stores/posStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { DeviceStatus, UserRole } from '@/types';
+import { version } from '../../../package.json';
 
 interface ManageAction {
   key: string;
@@ -184,7 +185,7 @@ export function ProfileScreen() {
 
         {/* Version info */}
         <div className="mx-4 mt-3 mb-2 flex items-center justify-center gap-4 text-xs text-[var(--pos-text-secondary)]">
-          <span>App v{terminal.appVersion}</span>
+          <span>App v{version}</span>
           <span>配置 {terminal.configVersion}</span>
         </div>
       </div>

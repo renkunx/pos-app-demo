@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Store, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
-
+import { version } from '../../package.json';
 export function LoginScreen() {
   const { login, serverUrl: savedServerUrl } = useAuthStore();
   const navigate = useUiStore((s) => s.navigate);
@@ -107,7 +107,7 @@ export function LoginScreen() {
       </button>
 
       {/* Version */}
-      <p className="mt-8 text-xs text-[var(--pos-text-secondary)]">v3.2.1</p>
+      <p className="mt-8 text-xs text-[var(--pos-text-secondary)]">v{version}</p>
     </div>
   );
 }
