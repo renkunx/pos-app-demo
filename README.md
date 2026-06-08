@@ -7,9 +7,6 @@
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white)
 
-## 在线预览
-
-> 部署到 GitHub Pages 后，将预览地址补充在此处。
 
 ## 功能特性
 
@@ -162,42 +159,9 @@ home ──收款──→ payment_loading ──→ payment_result ──→ ho
 | `posStore` | 交易记录、终端信息、快捷金额 | ✅ localStorage |
 | `uiStore` | 当前屏幕、Tab、筛选、弹层 | ❌ 刷新后按角色恢复默认页 |
 
-## 部署
-
-项目 `base` 已配置为 `./`，可直接部署到 GitHub Pages 等静态托管：
-
-```bash
-npm run build
-# 将 dist/ 目录内容上传至静态服务器
-```
-
-GitHub Pages 示例（`gh-pages` 分支或 Actions）：
-
-```yaml
-# .github/workflows/deploy.yml 示例
-name: Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-      - uses: actions/deploy-pages@v4
-```
-
 ## 说明
 
-- 本项目为**前端模拟器**，所有支付、退款、设备状态均为本地 Mock，不连接真实支付网关。
+- 本项目为**Demo**，所有支付、退款、设备状态均为本地 Mock，不连接真实支付网关。
 - 交易数据保存在浏览器 localStorage，清除站点数据会重置记录。
 
 ## License
@@ -211,5 +175,3 @@ jobs:
 | 基于本项目二次开发，衍生作品须以相同协议开源 | |
 
 > 这不是 OSI 认定的「宽松开源」协议（如 MIT），而是带**非商业限制**的共享协议，更符合「供交流学习、禁止商用」的诉求。完整条款见 [LICENSE](./LICENSE)。
-
-如需允许他人商用，可改用 [MIT](https://opensource.org/licenses/MIT) 或 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)；若希望更严格地限定「仅非商业软件使用」，可考虑 [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)。
